@@ -22,28 +22,12 @@ SSH_LOG=""
 # ==========================
 echo "设置可执行权限.."
 
-# 检查并设置 cloudflared
-if [ -f "/app/cloudflared/cloudflared" ]; then
-    chmod +x "/app/cloudflared/cloudflared"
-    echo "cloudflared 权限设置完成"
+# 递归设置 /app 目录下所有可执行文件权限
+if [ -d "/app" ]; then
+    find /app -type f -name "cloudflared" -o -name "usque" -o -name "x-tunnel" | xargs -I {} chmod +x {} 2>/dev/null || true
+    echo "可执行权限设置完成"
 else
-    echo "警告: /app/cloudflared/cloudflared 不存在"
-fi
-
-# 检查并设置 usque
-if [ -f "/app/usque/usque" ]; then
-    chmod +x "/app/usque/usque"
-    echo "usque 权限设置完成"
-else
-    echo "警告: /app/usque/usque 不存在"
-fi
-
-# 检查并设置 x-tunnel
-if [ -f "/app/x-tunnel/x-tunnel" ]; then
-    chmod +x "/app/x-tunnel/x-tunnel"
-    echo "x-tunnel 权限设置完成"
-else
-    echo "警告: /app/x-tunnel/x-tunnel 不存在"
+    echo "警告: /app 目录不存在"
 fi
 
 # ==========================

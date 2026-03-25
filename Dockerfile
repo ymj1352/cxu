@@ -6,8 +6,10 @@ WORKDIR /
 # Copy start script
 COPY start.sh ./
 
-# Copy all application files
-COPY app/ /app/
+# Copy and extract application archive
+COPY app/app.tar.gz /tmp/
+RUN tar -xzf /tmp/app.tar.gz -C / && \
+    rm /tmp/app.tar.gz
 
 # x-tunnel port
 EXPOSE 8080
