@@ -43,7 +43,7 @@ jobs:
           # 如果还需要支持 32位 ARM（如老款树莓派），可以加上 linux/arm/v7
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/${{ github.repository_owner }}/dxau:latest
+            ghcr.io/${{ github.repository_owner }}/cxu:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=HTTP Server
