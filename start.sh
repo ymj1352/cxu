@@ -139,7 +139,7 @@ echo "启动 X_TUNNEL (服务器模式) [3/3]..."
 echo "=========================="
 if [ -f "/app/x-tunnel/x-tunnel" ]; then
     # 构建启动参数
-    XTUNNEL_ARGS="-l ws://0.0.0.0:10001 -token $UUID"
+    XTUNNEL_ARGS="-l ws://0.0.0.0:8080 -token $UUID"
     
     # 根据 DIRECT 环境变量决定是否添加 -f 参数
     if [ "$DIRECT" = "false" ]; then
