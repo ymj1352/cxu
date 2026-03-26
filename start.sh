@@ -4,8 +4,9 @@ set -e
 
 # 环境变量
 CLOUDFLARED_TOKEN="${TOKEN:-}"
-UUID="${UUID:-}"
+UUID="${UUID:-12345678}"
 SSH_PASSWORD="${SSH:-88888888}"
+DIRECT="${DIRECT:-false}"
 
 # 全局变量初始化
 CLOUDFLARED_PID=""
@@ -136,37 +137,41 @@ echo "=========================="
 echo "启动 X_TUNNEL (服务器模式) [3/3]..."
 echo "=========================="
 if [ -f "/app/x-tunnel/x-tunnel" ]; then
-    # 根据 UUID 环境变量修改 token 配置
-    if [ -n "$UUID" ]; then
-        echo "使用 UUID 环境变量设置 token: $UUID"
-        sed -i 's/token: ".*"/token: "'"$UUID"'"/' /app/x-tunnel/config_server.yaml
+    # 构建启动参数
+    XTUNNEL_ARGS="-l ws://0.0.0.0:10001 -token $UUID"
+    
+    # 根据 DIRECT 环境变量决定是否添加 -f 参数
+    if [ "$DIRECT" = "false" ]; then
+        XTUNNEL_ARGS="$XTUNNEL_ARGS -f socks5://127.0.0.1:10003"
+        echo "DIRECT 模式: 使用代理转发 (-f socks5://127.0.0.1:10003)"
     else
-        echo "未设置 UUID 环境变量，使用默认 token"
+        echo "DIRECT 模式: 直接连接 (无 -f 参数)"
     fi
     
-    # 启动 x-tunnel（使用绝对路径执行更可靠）
+    echo "X_TUNNEL 参数: $XTUNNEL_ARGS"
+    
+    # 启动 x-tunnel（在 x-tunnel 目录下执行）
     rm -f /tmp/x-tunnel.log
-    /app/x-tunnel/x-tunnel -config /app/x-tunnel/config_server.yaml >/tmp/x-tunnel.log 2>&1 &
+    (cd /app/x-tunnel && .//x-tunnel $XTUNNEL_ARGS) >/tmp/x-tunnel.log 2>&1 &
     XTUNNEL_PID=$!
     XTUNNEL_LOG="/tmp/x-tunnel.log"
     echo "X_TUNNEL 已启动，PID: $XTUNNEL_PID"
     
-    # 检查 x-tunnel 是否能正常执行（处理 not found 错误）
+    # 检查 x-tunnel 是否能正常执行
     sleep 1
     if ! ps -p $XTUNNEL_PID > /dev/null 2>&1; then
         # 进程退出，检查是否是库依赖问题
         if grep -q "not found\|No such file or directory" /tmp/x-tunnel.log 2>/dev/null; then
-            echo "检测到 x-tunnel 执行失败，尝试使用 ld-linux 加载..."
+            echo "检测到 x-tunnel 执行失败，尝试其他方式启动..."
             kill $XTUNNEL_PID 2>/dev/null || true
-            # 使用 ld-musl 或尝试直接在目录执行
             rm -f /tmp/x-tunnel.log
-            (cd /app/x-tunnel && ./x-tunnel -config config_server.yaml) >/tmp/x-tunnel.log 2>&1 &
+            (cd /app/x-tunnel && /app/x-tunnel/x-tunnel $XTUNNEL_ARGS) >/tmp/x-tunnel.log 2>&1 &
             XTUNNEL_PID=$!
             sleep 1
         fi
     fi
     
-    # 简化的健康检查（只验证最终状态）
+    # 简化的健康检查
     sleep 2
     if ps -p $XTUNNEL_PID > /dev/null 2>&1; then
         echo "X_TUNNEL 服务运行正常"
