@@ -8,6 +8,7 @@ UUID="${UUID:-12345678}"
 SSH_PASSWORD="${SSH:-88888888}"
 DIRECT="${DIRECT:-false}"
 
+
 # 全局变量初始化
 CLOUDFLARED_PID=""
 USQUE_PID=""
@@ -150,9 +151,9 @@ if [ -f "/app/x-tunnel/x-tunnel" ]; then
     
     echo "X_TUNNEL 参数: $XTUNNEL_ARGS"
     
-    # 启动 x-tunnel（在 x-tunnel 目录下执行）
+    # 启动 x-tunnel（在 x-tunnel 目录下执行，使用规范的相对路径）
     rm -f /tmp/x-tunnel.log
-    (cd /app/x-tunnel && .//x-tunnel $XTUNNEL_ARGS) >/tmp/x-tunnel.log 2>&1 &
+    (cd /app/x-tunnel && ./x-tunnel $XTUNNEL_ARGS) >/tmp/x-tunnel.log 2>&1 &
     XTUNNEL_PID=$!
     XTUNNEL_LOG="/tmp/x-tunnel.log"
     echo "X_TUNNEL 已启动，PID: $XTUNNEL_PID"
@@ -165,7 +166,7 @@ if [ -f "/app/x-tunnel/x-tunnel" ]; then
             echo "检测到 x-tunnel 执行失败，尝试其他方式启动..."
             kill $XTUNNEL_PID 2>/dev/null || true
             rm -f /tmp/x-tunnel.log
-            (cd /app/x-tunnel && /app/x-tunnel/x-tunnel $XTUNNEL_ARGS) >/tmp/x-tunnel.log 2>&1 &
+            /app/x-tunnel/x-tunnel $XTUNNEL_ARGS >/tmp/x-tunnel.log 2>&1 &
             XTUNNEL_PID=$!
             sleep 1
         fi
